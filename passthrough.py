@@ -6,7 +6,7 @@ import os
 import sys
 import errno
 
-from fuse import FUSE, FuseOSError, Operations
+from fuse import FUSE, FuseOSError, Operations, fuse_get_context
 
 
 class Passthrough(Operations):
@@ -101,8 +101,11 @@ class Passthrough(Operations):
         return os.open(full_path, flags)
 
     def create(self, path, mode, fi=None):
+        uid, gid, pid = fuse_get_context()
         full_path = self._full_path(path)
-        return os.open(full_path, os.O_WRONLY | os.O_CREAT, mode)
+        fd = os.open(full_path, os.O_WRONLY | os.O_CREAT, mode)
+        os.chown(full_path,uid,gid) #chown to context uid & gid
+        return fd
 
     def read(self, path, length, offset, fh):
         os.lseek(fh, offset, os.SEEK_SET)
@@ -128,7 +131,8 @@ class Passthrough(Operations):
 
 
 def main(mountpoint, root):
-    FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
+    FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True, **{'allow_other': True})
+
 
 if __name__ == '__main__':
     main(sys.argv[2], sys.argv[1])
