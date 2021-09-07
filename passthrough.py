@@ -131,7 +131,7 @@ class Passthrough(Operations):
 
 
 def main(mountpoint, root):
-    FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True, **{'allow_other': True})
+    FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True, allow_other=True)
 
 
 if __name__ == '__main__':
